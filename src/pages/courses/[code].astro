@@ -177,5 +177,28 @@ const error = Astro.url.searchParams.get("error");
         list?.appendChild(item);
       });
     </script>
+    <script is:inline>
+      // Fixed English validation messages: the browser's built-in ones are
+      // localised to the visitor's browser language, which would show
+      // Chinese prompts on a Chinese-locale machine during an English demo.
+      // setCustomValidity must be cleared on every edit, or a corrected
+      // value still can't submit — the custom message sticks until cleared.
+      const VALIDATION_MESSAGES = {
+        nickname: "Please fill in this field.",
+        semesterTaken: "Please fill in this field.",
+        difficulty: "Please choose a difficulty from 1 to 5.",
+        hoursPerWeek: "Please enter hours between 0 and 60.",
+        background: "Please fill in this field.",
+        advice: "Please fill in this field.",
+      };
+
+      for (const [name, message] of Object.entries(VALIDATION_MESSAGES)) {
+        const field = document.querySelector(`[name="${name}"]`);
+        if (!field) continue;
+        field.addEventListener("invalid", () => field.setCustomValidity(message));
+        field.addEventListener("input", () => field.setCustomValidity(""));
+        field.addEventListener("change", () => field.setCustomValidity(""));
+      }
+    </script>
   </body>
 </html>
