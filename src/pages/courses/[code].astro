@@ -1,0 +1,181 @@
+---
+import { courseStats, getCourseByCode, listReportsForCourse, TEACHING_WEEKS } from "../../lib/db";
+import "../../styles.css";
+
+const codeParam = Astro.params.code ?? "";
+const course = getCourseByCode(codeParam.toUpperCase());
+if (!course) {
+  return Astro.redirect("/");
+}
+
+const stats = courseStats(course.id);
+const reports = listReportsForCourse(course.id);
+const estimatedHoursPerWeek = course.officialWorkloadHours
+  ? course.officialWorkloadHours / TEACHING_WEEKS
+  : null;
+const error = Astro.url.searchParams.get("error");
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{course.code} readiness reference</title>
+  </head>
+  <body>
+    <nav aria-label="site">
+      <a href="/">Courses</a>
+      <a href="/readme/">About</a>
+    </nav>
+    <main>
+      <h1>{course.code} — {course.title}</h1>
+      <p>
+        {course.semester} · official info from{" "}
+        <a href={course.sourceUrl} target="_blank" rel="noopener noreferrer">
+          Programs & Courses
+        </a>
+      </p>
+
+      <div class="stat-compare">
+        <div>
+          <span>Official workload estimate</span>
+          <span class="value">
+            {estimatedHoursPerWeek ? `${estimatedHoursPerWeek.toFixed(1)}h/wk` : "not stated"}
+          </span>
+          <span class="estimate-note">
+            {course.officialWorkloadHours
+              ? `Estimated by dividing the official total (${course.officialWorkloadHours}h) by ${TEACHING_WEEKS} teaching weeks — this is this app's own estimate, not an official figure.`
+              : "Programs & Courses doesn't state a total workload for this course."}
+          </span>
+        </div>
+        <div>
+          <span>Student-reported actual</span>
+          <span class="value">
+            {stats.avgHoursPerWeek ? `${stats.avgHoursPerWeek.toFixed(1)}h/wk` : "no reports yet"}
+          </span>
+          <span class="estimate-note">
+            {stats.reportCount > 0
+              ? `Average across ${stats.reportCount} report${stats.reportCount === 1 ? "" : "s"}; average difficulty ${stats.avgDifficulty?.toFixed(1)} / 5.`
+              : "Be the first to report on this course below."}
+          </span>
+        </div>
+      </div>
+
+      <p class="notice">
+        Nicknames only — please don't name or identify individual staff in your feedback.
+      </p>
+
+      {error && <p class="error">{error}</p>}
+
+      <h2>Submit a readiness report</h2>
+      <form method="post" action="/api/reports">
+        <input type="hidden" name="courseCode" value={course.code} />
+        <label for="nickname">
+          Nickname
+          <input id="nickname" name="nickname" required maxlength="60" />
+        </label>
+        <label for="semesterTaken">
+          Semester you took it
+          <input id="semesterTaken" name="semesterTaken" required maxlength="40" placeholder="e.g. Semester 2 2025" />
+        </label>
+        <label for="difficulty">
+          Difficulty (1 = easy, 5 = brutal)
+          <select id="difficulty" name="difficulty" required>
+            <option value="">Choose one</option>
+            <option value="1">1 — easy</option>
+            <option value="2">2</option>
+            <option value="3">3 — moderate</option>
+            <option value="4">4</option>
+            <option value="5">5 — brutal</option>
+          </select>
+        </label>
+        <label for="hoursPerWeek">
+          Actual hours per week
+          <input
+            id="hoursPerWeek"
+            name="hoursPerWeek"
+            type="number"
+            min="0"
+            max="60"
+            step="0.5"
+            required
+          />
+        </label>
+        <label for="background">
+          What you had going in (prior knowledge, courses done)
+          <textarea id="background" name="background" required maxlength="1000"></textarea>
+        </label>
+        <label for="advice">
+          What you wish someone had told you in week 1
+          <textarea id="advice" name="advice" required maxlength="1000"></textarea>
+        </label>
+        <button>Submit report</button>
+      </form>
+
+      <h2>Reports ({reports.length})</h2>
+      {reports.length === 0 && <p>No reports yet — be the first.</p>}
+      <ul id="reports">
+        {
+          reports.map((report) => (
+            <li class="report">
+              <h3>
+                {report.nickname} · {report.semesterTaken}
+              </h3>
+              <dl>
+                <dt>Difficulty</dt>
+                <dd>{report.difficulty} / 5</dd>
+                <dt>Hours/week</dt>
+                <dd>{report.hoursPerWeek}h</dd>
+                <dt>Background</dt>
+                <dd>{report.background}</dd>
+                <dt>Advice</dt>
+                <dd>{report.advice}</dd>
+              </dl>
+            </li>
+          ))
+        }
+      </ul>
+    </main>
+    <script is:inline define:vars={{ courseId: course.id }}>
+      // Live update: append a new report to the list as soon as it's
+      // submitted from any open tab, without a full reload. Purely additive
+      // — the aggregate stats above only update on the next page load.
+      // Every field is user-submitted, so it's placed with textContent, never
+      // innerHTML, to keep this from becoming a stored-XSS vector.
+      const list = document.querySelector("#reports");
+      const source = new EventSource("/api/events");
+
+      function field(dt, dd) {
+        const dtEl = document.createElement("dt");
+        dtEl.textContent = dt;
+        const ddEl = document.createElement("dd");
+        ddEl.textContent = dd;
+        return [dtEl, ddEl];
+      }
+
+      source.addEventListener("message", (event) => {
+        const report = JSON.parse(event.data);
+        if (report.courseId !== courseId) return;
+
+        const item = document.createElement("li");
+        item.className = "report";
+
+        const heading = document.createElement("h3");
+        heading.textContent = `${report.nickname} · ${report.semesterTaken}`;
+        item.appendChild(heading);
+
+        const dl = document.createElement("dl");
+        dl.append(
+          ...field("Difficulty", `${report.difficulty} / 5`),
+          ...field("Hours/week", `${report.hoursPerWeek}h`),
+          ...field("Background", report.background),
+          ...field("Advice", report.advice),
+        );
+        item.appendChild(dl);
+
+        list?.appendChild(item);
+      });
+    </script>
+  </body>
+</html>
