@@ -1,54 +1,36 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-Written by you, for a reader: how you got from the brief to the harness and
-agentic workflow behind this submission. Markers read this file and follow its
-citations; they don't trawl the repo for evidence you didn't point at.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and its
-[word counts](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#word-counts)
-cover every deliverable.
-
 ## What I built
 
-A sentence or two. `README.md` is where the account of what the app is and what
-good means here lives; this file is how you got there.
+A course readiness reference for ANU computing courses. Each course page
+puts the official Programs & Courses workload next to reports from
+students who have taken it: difficulty, real hours per week, the
+background they had, and what they wish they'd known in week 1.
 
 ## How I got here
 
-The account of the process: how the work actually went, and how you knew the
-result was right. Tell it in whatever order makes it clear. A weekly prototype
-needs a paragraph or two; an assignment needs more.
+I changed topic twice. A Canvas deadline board fell apart when I found
+the Agenda view already lists only the things I need to submit. A
+tutorial swap board fell apart when ANU's MyTimetable guide showed the
+heart button is already "Request Swap". The third idea came from my own
+electives: the COMP6261 page only says "130 hours", SELT only shows 1–5
+scores, and StudentVIP has almost no postgrad reviews.
 
-Cite the record as you go, as links whose text is the commit hash or range and
-whose target is this repo's commit or compare URL, so a reader clicks straight
-to the evidence:
+Before any code, I wrote my rules into CLAUDE.md [`a21b570`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-u8033161/commit/a21b570): no invented
+student reports, every official figure links to its Programs & Courses
+page, and nicknames only.
 
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
+Then I corrected the agent's plan in three places. Its seed script would
+only have filled my local database, so the courses are now seeded at
+startup and reach Fly's volume [`73c4f97`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-u8033161/commit/73c4f97). The weekly hours figure is
+labelled as my app's own estimate, because Programs & Courses only gives
+a total [`1563286`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-u8033161/commit/1563286). And the form's error messages showed in Chinese on
+my laptop, so I set fixed English messages [`c4c225b`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-u8033161/commit/c4c225b).
 
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
+A spec test checks that a report survives a reload, and that the server
+rejects bad input [`4411f0d`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-u8033161/commit/4411f0d).
 
-> the prompt, verbatim
+## Known limits
 
-Screenshots are welcome where one carries the point better than a sentence does.
-Commit the file to this repo and link it with a **relative** path, which is what
-makes it render on GitHub: `![alt text](docs/before.png)`. Images don't count
-towards the word count and don't replace the citation.
-
-## Before you ship
-
-`pnpm check:evidence` verifies that this comment is gone, that your citations
-resolve to real commits, that a crit week's reflection entry is in
-`reflections/`, and that your `CLAUDE.md` is there. It checks that your account
-is traceable, not that it is good: that is the marker's call.
-
-Images aren't checked: unlike a citation whose SHA doesn't resolve, a broken
-image is visible the moment this file is rendered on GitHub.
+Anyone can post a report, so spam is possible. Filtering reports by the
+courses someone took before is my next step.
